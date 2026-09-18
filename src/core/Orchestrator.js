@@ -1,5 +1,3 @@
-import { Agent } from './Agent.js';
-
 /**
  * The Orchestrator manages the task lifecycle and the Generate -> Reflect -> Refine loop.
  */
@@ -20,9 +18,12 @@ export class Orchestrator {
    * @param {import('./Hook.js').Hook} hook 
    */
   registerHook(event, hook) {
-    if (this.hooks[event]) {
-      this.hooks[event].push(hook);
+    if (!this.hooks[event]) {
+      throw new Error(
+        `Unknown hook event: "${event}". Valid events: ${Object.keys(this.hooks).join(', ')}`
+      );
     }
+    this.hooks[event].push(hook);
   }
 
   /**

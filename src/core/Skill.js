@@ -32,11 +32,10 @@ export class Skill {
    * @returns {Object} Anthropic tool schema.
    */
   toToolSchema() {
-    // This will be expanded to generate valid Anthropic Tool schemas.
     return {
       name: this.name,
       description: this.description,
-      // input_schema would be defined dynamically based on the skill args.
+      input_schema: { type: 'object', properties: {}, required: [] }
     };
   }
 }

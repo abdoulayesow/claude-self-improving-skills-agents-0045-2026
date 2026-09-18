@@ -1,5 +1,8 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 
+/** Maximum number of tool-use rounds before the agent stops to prevent runaway loops. */
+const MAX_TOOL_ROUNDS = 10;
+
 /**
  * Base Agent class that wraps the Anthropic SDK.
  */
@@ -7,13 +10,12 @@ export class Agent {
   /**
    * @param {string} role - The role of the agent (e.g., 'Architect', 'Builder').
    * @param {string} systemPrompt - The core instructions for the agent.
+   * @param {Anthropic} [client] - Optional shared Anthropic client. Creates a new one if not provided.
    */
-  constructor(role, systemPrompt) {
+  constructor(role, systemPrompt, client = null) {
     this.role = role;
     this.systemPrompt = systemPrompt;
-    
-    // Initialize Anthropic client. Expects ANTHROPIC_API_KEY in environment.
-    this.client = new Anthropic(); 
+    this.client = client || new Anthropic();
   }
 
   /**
@@ -35,8 +37,15 @@ export class Agent {
     }
     
     let messages = [{ role: 'user', content: prompt }];
+    let round = 0;
     
     while (true) {
+      if (round >= MAX_TOOL_ROUNDS) {
+        throw new Error(
+          `[Agent: ${this.role}] Exceeded maximum tool rounds (${MAX_TOOL_ROUNDS}). Aborting to prevent runaway loop.`
+        );
+      }
+      round++;
       const response = await this.client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4096,

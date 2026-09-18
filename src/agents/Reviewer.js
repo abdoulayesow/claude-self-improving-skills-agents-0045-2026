@@ -6,13 +6,17 @@ import { MemoryManager } from '../memory/MemoryManager.js';
  * permanent rules (learnings) to prevent future occurrences.
  */
 export class Reviewer extends Agent {
-  constructor() {
+  /**
+   * @param {import('../memory/MemoryManager.js').MemoryManager} [memoryManager] - Injected memory manager.
+   * @param {import('@anthropic-ai/sdk').Anthropic} [client] - Optional shared Anthropic client.
+   */
+  constructor(memoryManager = null, client = null) {
     const systemPrompt = `You are the Reviewer Agent in a self-improving framework.
 Your task is to analyze failed execution traces. Identify the root cause of the failure and output a SINGLE, clear, actionable rule that the Architect or Builder agents should follow in the future to prevent this mistake.
 Your output must be JUST the rule, no explanations, no markdown formatting.`;
 
-    super('Reviewer', systemPrompt);
-    this.memoryManager = new MemoryManager();
+    super('Reviewer', systemPrompt, client);
+    this.memoryManager = memoryManager || new MemoryManager();
   }
 
   /**
