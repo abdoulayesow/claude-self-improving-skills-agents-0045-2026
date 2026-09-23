@@ -65,15 +65,25 @@ export class Orchestrator {
       const architect = this.agents.get('Architect');
       if (!architect) throw new Error("Architect agent not registered.");
 
-      console.log(`[Orchestrator] Executing Generate Phase...`);
+      console.log(`[Orchestrator] Executing Generate Phase (Architect)...`);
       const plan = await architect.process(prompt, context, Array.from(this.skills.values()));
       context.trace.push({ role: 'Architect', action: 'Plan', result: plan });
+
+      // 2b. Build / Execution Phase (Builder agent, if registered)
+      let buildResult = null;
+      const builder = this.agents.get('Builder');
+      if (builder) {
+        console.log(`[Orchestrator] Executing Build Phase (Builder)...`);
+        const builderPrompt = `Task Prompt:\n${prompt}\n\nArchitect's Plan:\n${plan}\n\nPlease implement and execute this plan using the available tools.`;
+        buildResult = await builder.process(builderPrompt, context, Array.from(this.skills.values()));
+        context.trace.push({ role: 'Builder', action: 'Execute', result: buildResult });
+      }
 
       // 3. Post-Generation Hooks (e.g., Linting, Testing)
       await this.runHooks('postGeneration', context);
 
       console.log(`[Orchestrator] Task ${context.taskId} completed successfully.`);
-      return { status: 'success', plan, context };
+      return { status: 'success', plan, buildResult, context };
 
     } catch (error) {
       console.error(`[Orchestrator] Task failed: ${error.message}`);
